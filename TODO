@@ -1,25 +1,18 @@
-- les ennemies devront nous tirer dessus
 
-    
-    - create struct targetBullet 
-         x de t 
-         y de t 
-         random speed
-         targetBullet_isexplosion
-         
-    - draw()
-    - move()
-        
-TASK 4 : 
-    The cannon, bullets and targets should have a more visually attractive shape - an example of how to draw a trapezoid at any angle can be found in 08-tapered_bullet git repository.
-- cannon -> in progress  
-- bullet 
-- target 
+TASK 5 : 
+Modify the program from task 4 so that the targets (enemy spaceships) shoot towards the cannon. Implement a score for each ship shot down and a finite number of lives increased when the appropriate number of points is reached.
+
+Maximum number of missiles in flight at one time:
+one missile per enemy ship
+three missiles per cannon
+
+TO DO : 
+- three missiles per cannon 
+- finite number of lives  
+ DUE TO THE 20 OF MAY ²:
 
 
 
-On the screen, we can find more than one enemy. Additional ones should appear in random time stamps and should have different movement path. 
-Add score table in a corner of the screen. The table should show the number of hit enemies and the number of fired bullets.   
- 
-- use dynamic list to list all objects ennemies, bullets, 
 
+
+NO NEED TO MALLOC 

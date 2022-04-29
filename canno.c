@@ -4,6 +4,21 @@
 #include <time.h> 
 #include <stdio.h>
 
+struct TargetBullet {
+  int x;
+  int y;
+  int size;
+  enum color c;
+  int fire_angle;
+  int is_shot;
+  double distance;
+  int x_init;
+  int y_init;
+  int is_explosionBasic;
+  int explosion_ctpBasic;
+};
+
+
 struct Target {
 	int x;
 	int y;
@@ -12,7 +27,8 @@ struct Target {
 	int size;
 	enum color c; // target.c means color
   int explosion_cpt; 
-  int direction; // -1 if target is not displayed, 0 or 1 if it is
+  int direction;
+  struct TargetBullet tb; // -1 if target is not displayed, 0 or 1 if it is
 };
 
 struct Bullet {
@@ -25,14 +41,6 @@ struct Bullet {
   int is_shot;
   int x_init;
   int fire_cpt;
-};
-
-struct TargetBullet {
-  int x;
-  int y;
-  int size;
-  enum color c;
-  int fire_angle;
 };
 
 void targetReInit(struct Target *t) {
@@ -54,7 +62,8 @@ struct Basic {
 	enum color c;
 };
  // first function to be called, draw the basic elements 
-void draw_basic(double angle, struct Basic *b, int score, int fire_score) {
+void draw_basic(double angle, struct Basic *b, int score, int fire_score, int death_score) {
+
     
     double delta_angle= 2.0 * (M_PI/180.0);
     int x1_barrel = 150 * cos(angle-delta_angle);
@@ -76,8 +85,11 @@ void draw_basic(double angle, struct Basic *b, int score, int fire_score) {
     char *x = "SCORES";
     char *scoreTarget = "Targets shot";
     char *scoreBullet = "Bullets shot";
+    char *deathScore = "Death score";
+
     char count [5];
     char fire_count [5];
+    char death_count [5];
 
 
 
@@ -88,7 +100,9 @@ void draw_basic(double angle, struct Basic *b, int score, int fire_score) {
     gfx_textout(150, 50, SDL_itoa(score, count, 10), RED);
     gfx_textout(20, 50, scoreTarget, WHITE);
     gfx_textout(150, 80, SDL_itoa(fire_score, fire_count, 10), RED);
+    gfx_textout(150, 110, SDL_itoa(death_score, death_count, 10), RED);
     gfx_textout(20, 80, scoreBullet, WHITE);
+    gfx_textout(20, 110, deathScore, WHITE);
 
 }
 
@@ -108,8 +122,7 @@ void animation(struct Target *t, int i)
 
 void draw_target(struct Target *tt, int i)
 {	
-
-  gfx_filledCircle(tt->x, tt->y, tt->size, tt->c);
+  gfx_filledRect(tt->x, tt->y, tt->x + tt->size, tt->y - tt->size, tt->c);
  	
   //printf("adress draw_target 2: %u    \n", tt);
 	if (tt->is_explosion == 1) 
@@ -160,8 +173,16 @@ void move_target(struct Target *t, int i) {
 void draw_bullet(struct Bullet *b) {
       b->x = b->distance * cos(b->fire_angle) + b->x_init;
       b->y = -b->distance * sin(b->fire_angle) + gfx_screenHeight();
+      const int widthDecalage = 10;
+      const int heightDecalage = 40;
+      const int partDecalage = 20;
+      const int partDecalage2 = 40;
 
-      gfx_filledCircle(b->x, b->y, b->size,b->c);
+      gfx_filledTriangle(b->x, b->y, b->x + widthDecalage, b->y + heightDecalage, b->x - widthDecalage, b->y + heightDecalage, b->c);
+      gfx_filledTriangle(b->x, b->y + partDecalage, b->x + widthDecalage, b->y + heightDecalage + partDecalage, b->x - widthDecalage, b->y + heightDecalage + partDecalage, b->c);
+      gfx_filledTriangle(b->x, b->y + partDecalage2, b->x + widthDecalage, b->y + heightDecalage + partDecalage2, b->x - widthDecalage, b->y + heightDecalage + partDecalage2, b->c);
+      // gfx_filledCircle(b->x, b->y, b->size,b->c);
+      
 }
 
 
@@ -195,8 +216,57 @@ void init_shot(struct Bullet *b, double angle, struct Basic *ba) {
 }
 
 void targetShoot(struct Target *t) {
+  t->tb.x_init = t->x;
+  t->tb.y_init = t->y;
+  t->tb.is_shot = 1;
+  t->tb.fire_angle = 0 + rand() % 2;
+}
+
+void moveTargetBullet(struct Target *t) {
+      t->tb.x = t->tb.distance * sin(t->tb.fire_angle) + t->tb.x_init;
+      t->tb.y = t->tb.distance * cos(t->tb.fire_angle) + t->tb.y_init;
+      // printf("%d %d %d \n", i, t->tb.y, gfx_screenHeight());
+      if ((t->tb.y > gfx_screenHeight()) || (t->tb.x > gfx_screenWidth()) || (t->tb.x < 0) || (t->tb.y < 0) || (t->tb.is_explosionBasic == 1)) {
+        // printf("reinit");
+        t->tb.is_shot = 0;
+        t->tb.is_explosionBasic = 0;
+        t->tb.distance = 0;
+        t->tb.fire_angle = 0;
+      } else {
+      t->tb.distance += 5;
+      }
 
 }
+
+
+
+
+
+void animationBasic(struct Target *t) 
+{
+	int size = t->tb.size + 220;
+  gfx_filledCircle(t->tb.x, t->tb.y, size, t->tb.c);
+}
+
+void drawTargetBullet(struct Target *t){
+     gfx_filledCircle(t->tb.x, t->tb.y, t->tb.size, t->tb.c); 
+
+     if (t->tb.is_explosionBasic == 1) {
+       animationBasic(t);
+     }
+}
+
+void checkTargetBulletBasicDistance(struct Target *t, struct Basic *b)
+{
+  if ((((b->x - t->tb.x)*(b->x - t->tb.x)) + ((b->y - t->tb.y)*(b->y - t->tb.y))) < 8500)
+  {
+    // printf("explosion");
+    t->tb.explosion_ctpBasic += 1;
+    t->tb.is_shot = 0;
+    t->tb.is_explosionBasic = 1;
+  }
+};
+
 
 #define NUMBER_OF_ENNEMY 3
 #define NUMBER_OF_BULLET 30
@@ -210,25 +280,36 @@ int main() {
     exit(3);
   // srand(time( NULL ));
   struct Target t[NUMBER_OF_ENNEMY];
-  for (int i=0; i < NUMBER_OF_ENNEMY; i++) {
+  for (int i=1; i < NUMBER_OF_ENNEMY; i++) {
     t[i].x = 0;
-    t[i].y = 100 + rand() % 500;
+    t[i].y = 100 + rand() % 100;
     t[i].speed = 2 + rand() % 7; //speed between 2 and 8
     t[i].size = 5 + rand() % 20;
     t[i].is_explosion = 0;
     t[i].c = GREEN;
     t[i].explosion_cpt = 0;
     t[i].direction = -1;
+    t[i].tb.c = RED;
+    t[i].tb.fire_angle = rand() % 180;
+    t[i].tb.size = 5 + rand() % 20;
+    t[i].tb.x = 0;
+    t[i].tb.y = 0;
+    t[i].tb.is_shot = 0;
+    t[i].tb.distance = 0;
+    t[i].tb.x_init = 0;
+    t[i].tb.y_init = 0;
+    t[i].tb.is_explosionBasic = 0;
+    t[i].tb.explosion_ctpBasic = 0;
   }
 
-  struct TargetBullet tb[NUMBER_OF_TARGET_BULLET];
-  for (int i = 0; i < NUMBER_OF_TARGET_BULLET; i++) {
-    tb[i].x = 0;
-    tb[i].y = 0;
-    tb[i].size = 0;
-    tb[i].c = RED;
-    tb[i].fire_angle = 0;
-  }
+  // struct TargetBullet tb[NUMBER_OF_TARGET_BULLET];
+  // for (int i = 0; i < NUMBER_OF_TARGET_BULLET; i++) {
+  //   tb[i].x = 0;
+  //   tb[i].y = 0;
+  //   tb[i].size = 10;
+  //   tb[i].c = RED;
+  //   tb[i].fire_angle = 0;
+  // }
 
   int delayCpt = 0;
   // int bulletPerSec = 0;
@@ -258,24 +339,27 @@ int main() {
   }
  
   int score = 0;
+  int death_score = 0;
   int fire_sc = 0; 
 
   while(1)
   { 
-    for (int i = 0; i < NUMBER_OF_ENNEMY; i++) {
+    for (int i = 1; i < NUMBER_OF_ENNEMY; i++) {
       score += t[i].explosion_cpt;
+      death_score += t[i].tb.explosion_ctpBasic;
     } 
 
     for (int j = 0; j < NUMBER_OF_BULLET; j++) {
       fire_sc += b[j].fire_cpt;
     }  
-    draw_basic(angle, &(ba[1]), score, fire_sc);
+    draw_basic(angle, &(ba[1]), score, fire_sc, death_score);
     fire_sc = 0;
     score = 0;                  
+    death_score = 0;
     // draw targets
     // srand(time( NULL ));
       // printf("%d %d\n", time(NULL), rand());
-    for (int i=0; i<NUMBER_OF_ENNEMY;i++) {
+    for (int i=1; i<NUMBER_OF_ENNEMY;i++) {
       // if t->direction = 0 or 1, draw target
       // else => random number to display 
 
@@ -283,8 +367,16 @@ int main() {
        //printf("adress main 1 : %u", &(t[i]));
 	     draw_target(&(t[i]), i);
        move_target(&(t[i]), i);
-       if (rand() % 5 == RANDOM_NUMBER) {
+      // printf("%d %d\n", i, t[i]->tb.is_shot);
+       if (t[i].tb.is_shot == 1){
+        //  printf("draw");
+         drawTargetBullet(&(t[i]));
+         moveTargetBullet(&(t[i]));
+         checkTargetBulletBasicDistance(&(t[i]), &(ba[1]));
+        //  printf("is shot %d\n", t[i].tb.is_shot);
+       } else if (rand() % 50 == RANDOM_NUMBER) {
          // the target throw a bullet 
+        //  printf("shoot\n");
          targetShoot(&(t[i]));
        }
       } else if (RANDOM_NUMBER == (rand() % 4))  {
@@ -305,7 +397,7 @@ int main() {
 
      	for (int j = 0; j<NUMBER_OF_BULLET;j++) {
         // for each target we need to check the distance with all bullets, then explode them if they are close 
-		    for (int k = 0; k < NUMBER_OF_ENNEMY; k++) {
+		    for (int k = 1; k < NUMBER_OF_ENNEMY; k++) {
           if (b[j].is_shot == 1) {
 			      check_distance((&b[j]), &(t[k]), k);
 	    	}	
