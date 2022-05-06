@@ -8,11 +8,11 @@ three missiles per cannon
 
 TO DO : 
 - three missiles per cannon 
-- finite number of lives  
+- finite number of lives : when score >= number of lives => shutdown : while !STOP 
  DUE TO THE 20 OF MAY ²:
 
 
 
 
-
+dynamic for ennemies => need to know how this works:w 
 NO NEED TO MALLOC 

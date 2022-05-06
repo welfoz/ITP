@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "primlib.h"
 #include <stdlib.h>
 #include <math.h>
@@ -62,7 +63,7 @@ struct Basic {
 	enum color c;
 };
  // first function to be called, draw the basic elements 
-void draw_basic(double angle, struct Basic *b, int score, int fire_score, int death_score) {
+void draw_basic(double angle, struct Basic *b, int score, int fire_score, int death_score, int numberOfLives) {
 
     
     double delta_angle= 2.0 * (M_PI/180.0);
@@ -86,12 +87,15 @@ void draw_basic(double angle, struct Basic *b, int score, int fire_score, int de
     char *scoreTarget = "Targets shot";
     char *scoreBullet = "Bullets shot";
     char *deathScore = "Death score";
+    char *livesLeft = "Lives left";
 
     char count [5];
     char fire_count [5];
     char death_count [5];
-
-
+    char lives_left [5];
+    
+    numberOfLives = numberOfLives - death_score;
+    
 
     //SDL_itoa(score, buf, 10); 
 //    itoa(score, buf, 10;
@@ -103,6 +107,8 @@ void draw_basic(double angle, struct Basic *b, int score, int fire_score, int de
     gfx_textout(150, 110, SDL_itoa(death_score, death_count, 10), RED);
     gfx_textout(20, 80, scoreBullet, WHITE);
     gfx_textout(20, 110, deathScore, WHITE);
+    gfx_textout(20, 140, livesLeft, WHITE);
+    gfx_textout(150, 140, SDL_itoa(numberOfLives, lives_left, 10), RED);
 
 }
 
@@ -265,13 +271,14 @@ void checkTargetBulletBasicDistance(struct Target *t, struct Basic *b)
     t->tb.is_shot = 0;
     t->tb.is_explosionBasic = 1;
   }
-};
+}
 
 
 #define NUMBER_OF_ENNEMY 3
-#define NUMBER_OF_BULLET 30
+#define NUMBER_OF_BULLET 3
 #define RANDOM_NUMBER 1
-#define NUMBER_OF_TARGET_BULLET 10
+#define NUMBER_OF_LIVES 3
+
 
 
 int main() {
@@ -279,8 +286,8 @@ int main() {
   if (gfx_init())
     exit(3);
   // srand(time( NULL ));
-  struct Target t[NUMBER_OF_ENNEMY];
-  for (int i=1; i < NUMBER_OF_ENNEMY; i++) {
+  struct Target t[NUMBER_OF_ENNEMY +1];
+  for (int i=1; i < NUMBER_OF_ENNEMY+1; i++) {
     t[i].x = 0;
     t[i].y = 100 + rand() % 100;
     t[i].speed = 2 + rand() % 7; //speed between 2 and 8
@@ -316,7 +323,7 @@ int main() {
   double angle = 90.0 * (M_PI / 180.0);
   int is_shooting = 0;
 
-  struct Bullet b[NUMBER_OF_BULLET];
+  struct Bullet b[NUMBER_OF_BULLET +1];
   struct Basic ba[1]; 
 
 
@@ -327,7 +334,7 @@ int main() {
 
 
 
-  for (int i=0; i < NUMBER_OF_BULLET; i++) {
+  for (int i=1; i < NUMBER_OF_BULLET +1; i++) {
     b[i].x = 0;
     b[i].y = 0;
     b[i].size = 10; 
@@ -341,30 +348,41 @@ int main() {
   int score = 0;
   int death_score = 0;
   int fire_sc = 0; 
-
-  while(1)
+  
+  int stop = 0;
+  while(!stop)
   { 
-    for (int i = 1; i < NUMBER_OF_ENNEMY; i++) {
+    for (int i = 1; i < NUMBER_OF_ENNEMY +1; i++) {
       score += t[i].explosion_cpt;
       death_score += t[i].tb.explosion_ctpBasic;
     } 
 
-    for (int j = 0; j < NUMBER_OF_BULLET; j++) {
+    if (death_score >= NUMBER_OF_LIVES) {
+      stop = 1;
+      char *lose = "Game Lose !";
+      gfx_textout(200,3000, lose, WHITE);
+
+      gfx_updateScreen();
+      sleep(5);
+      
+    } 
+
+    for (int j = 1; j < NUMBER_OF_BULLET +1; j++) {
       fire_sc += b[j].fire_cpt;
     }  
-    draw_basic(angle, &(ba[1]), score, fire_sc, death_score);
+    draw_basic(angle, &(ba[1]), score, fire_sc, death_score, NUMBER_OF_LIVES);
     fire_sc = 0;
     score = 0;                  
     death_score = 0;
     // draw targets
     // srand(time( NULL ));
       // printf("%d %d\n", time(NULL), rand());
-    for (int i=1; i<NUMBER_OF_ENNEMY;i++) {
+    for (int i=1; i<NUMBER_OF_ENNEMY +1;i++) {
       // if t->direction = 0 or 1, draw target
       // else => random number to display 
 
       if (t[i].direction != -1) {
-       //printf("adress main 1 : %u", &(t[i]));
+      //printf(1adress main 1 : %u", &(t[i]));
 	     draw_target(&(t[i]), i);
        move_target(&(t[i]), i);
       // printf("%d %d\n", i, t[i]->tb.is_shot);
@@ -387,7 +405,7 @@ int main() {
     // draw bullets 
     if(is_shooting)
     {
-      for (int i = 0; i < NUMBER_OF_BULLET; i++){
+      for (int i = 1; i < NUMBER_OF_BULLET +1; i++){
 	      if (b[i].is_shot == 1) {
           //gf("bullet %d", i);
           draw_bullet(&(b[i]));
@@ -395,15 +413,17 @@ int main() {
         }
       }
 
-     	for (int j = 0; j<NUMBER_OF_BULLET;j++) {
+     	for (int j = 1; j<NUMBER_OF_BULLET +1;j++) {
         // for each target we need to check the distance with all bullets, then explode them if they are close 
-		    for (int k = 1; k < NUMBER_OF_ENNEMY; k++) {
+		    for (int k = 1; k < NUMBER_OF_ENNEMY+1; k++) {
           if (b[j].is_shot == 1) {
 			      check_distance((&b[j]), &(t[k]), k);
 	    	}	
     	}
     }
     }
+
+     
     
    // y_target = cos(x_target)*50 + 50;
     
@@ -418,7 +438,7 @@ int main() {
       //gf("%ld    ", timeNow);
       if (delayCpt == 0) {
         is_shooting = 1;
-        for (int i=0; i<NUMBER_OF_BULLET; i++) {
+        for (int i=1; i<NUMBER_OF_BULLET +1; i++) {
           if (b[i].is_shot == 0) {
             //gf("oui");
             init_shot(&(b[i]), angle, &(ba[1]));
@@ -440,6 +460,7 @@ int main() {
     } else {
       delayCpt += 1;
     }
+    
     SDL_Delay(10);
   };
   return 0;
