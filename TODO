@@ -1,18 +1,15 @@
 
-TASK 5 : 
-Modify the program from task 4 so that the targets (enemy spaceships) shoot towards the cannon. Implement a score for each ship shot down and a finite number of lives increased when the appropriate number of points is reached.
+DUE TO THE 9th JUNE 
 
-Maximum number of missiles in flight at one time:
-one missile per enemy ship
-three missiles per cannon
+dynamic for ennemies => need to know how this works
 
-TO DO : 
-- three missiles per cannon 
-- finite number of lives : when score >= number of lives => shutdown : while !STOP 
- DUE TO THE 20 OF MAY ²:
+Modify the program from task 5 in such a way that after shooting down all the enemy ships, there is a transition to the next level, where there are more ships moving faster and firing more often. Use dynamic memory allocation.
+
+NEED TO MALLOC 
 
 
 
+multiple bullets for ships ?  => non ? 
 
-dynamic for ennemies => need to know how this works:w 
-NO NEED TO MALLOC 
+- plus value => permet de ne pas faire de nouvelles 
+- malloc = allocation dynamique 
