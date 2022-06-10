@@ -206,12 +206,12 @@ void draw_bullet(struct Bullet *b) {
 
 
 void move_bullet(struct Bullet *b) {
-	b->distance += 5;
+	b->distance += 15;
 }
 
 void check_distance(struct Bullet *b, Target *t, int i) {
 
-	if ((b->y > 0) && (b->x > 0) && (b->y < gfx_screenHeight) && (b->x < gfx_screenWidth)) {
+	if ((b->y > 0) && (b->x > 0) && (b->y < gfx_screenHeight()) && (b->x < gfx_screenWidth())) {
  				if ((((b->x - t->x)*(b->x - t->x)) + ((b->y - t->y)*(b->y - t->y))) < 2500)
    			{
    					//gf("pooummm");
@@ -315,42 +315,47 @@ void targetInit(Target *t, int level) {
       t->tb.fireOdds = level*2;
 }
 
-// #define numberOfEnnemies 3
-#define NUMBER_OF_BULLET 10
+#define NUMBER_OF_BULLET 05
 #define RANDOM_NUMBER 1
 #define NUMBER_OF_LIVES 10
 
-
-
 int main() {
 
+  if (gfx_init())
+    exit(3);
+
+  // level 1 data
   int numberOfEnnemies; 
   numberOfEnnemies = 3;
   int level_score = 1;
-  if (gfx_init())
-    exit(3);
+
+  // init Target Structure
   Target* t = NULL;
   t = malloc(sizeof(Target) * numberOfEnnemies);
-
-
-  // struct Target t[numberOfEnnemies +1];
   for (int i=0; i < numberOfEnnemies; i++) {
    targetInit(&(t[i]), level_score);
   }
 
+  // initialize variables
+  int score = 0;
+  int death_score = 0;
+  int fire_sc = 0; 
+  int stop = 0;
+  int total_TargetShoot =0;
+  int targetLeft_score = 0;
   int delayCpt = 0;
-  // int bulletPerSec = 0;
   double angle = 90.0 * (M_PI / 180.0);
   int is_shooting = 0;
 
-  struct Bullet b[NUMBER_OF_BULLET +1];
+  // init Basic Structure
   struct Basic ba[1]; 
-  
   ba[1].x = gfx_screenWidth() / 2;
   ba[1].y = gfx_screenHeight();
   ba[1].size = 100;
   ba[1].c = YELLOW;
 
+  // init bullet structure
+  struct Bullet b[NUMBER_OF_BULLET +1];
   for (int i=1; i < NUMBER_OF_BULLET +1; i++) {
     b[i].x = 0;
     b[i].y = 0;
@@ -362,24 +367,18 @@ int main() {
     b[i].x_init = ba->x;
   }
  
-  int score = 0;
-  int death_score = 0;
-  int fire_sc = 0; 
-  
-  int stop = 0;
-  int total_TargetShoot =0;
-  
-  int targetLeft_score = 0;
   while(!stop)
   { 
-      score = total_TargetShoot;
+    
+    //check scores
+    score = total_TargetShoot;
     for (int i = 0; i < numberOfEnnemies; i++) {
       score += t[i].explosion_cpt;
       death_score += t[i].tb.explosion_ctpBasic;
       targetLeft_score += t[i].is_display;
     } 
 
-
+    //end game when no more lives left
     if (death_score >= NUMBER_OF_LIVES) {
       stop = 1;
       char *lose = "Game Lose !";
@@ -390,12 +389,15 @@ int main() {
       
     } 
 
+    //fire score: number of bullet shot 
     for (int j = 1; j < NUMBER_OF_BULLET +1; j++) {
       fire_sc += b[j].fire_cpt;
     }  
     draw_basic(angle, &(ba[1]), score, fire_sc, death_score, NUMBER_OF_LIVES, level_score, targetLeft_score);
     fire_sc = 0;
     death_score = 0;
+
+    // next level
     if (targetLeft_score == 0) {
       // animation transition 
       // new level 
@@ -418,10 +420,9 @@ int main() {
       gfx_updateScreen();
       sleep(2);
     }
-
     targetLeft_score = 0;
+
     // draw targets
-      // printf("%d %d\n", time(NULL), rand());
     for (int i=0; i<numberOfEnnemies;i++) {
       // if t->direction = 0 or 1, draw target
       // else => random number to display 
@@ -452,7 +453,7 @@ int main() {
       }
     }
     
-    // draw bullets 
+    // draw bullets already shot 
     if(is_shooting)
     {
       for (int i = 1; i < NUMBER_OF_BULLET +1; i++){
@@ -472,25 +473,18 @@ int main() {
     }
     }
 
-     
-    
-   // y_target = cos(x_target)*50 + 50;
-    
     gfx_updateScreen();
 
-    /**if(gfx_isKeyDown(SDLK_RIGHT))
-     angle -= 1.0 * (3.14/180.0);
-    if(gfx_isKeyDown(SDLK_LEFT))
-     angle += 1.0 * (3.14/180.0); */
+    // listen keyboard
     if(gfx_isKeyDown(SDLK_SPACE))
     { 
-      //gf("%ld    ", timeNow);
       if (delayCpt == 0) {
         is_shooting = 1;
         for (int i=1; i<NUMBER_OF_BULLET +1; i++) {
           if (b[i].is_shot == 0) {
             //gf("oui");
             init_shot(&(b[i]), angle, &(ba[1]));
+            delayCpt++;
             break;
           }
         }
@@ -503,10 +497,10 @@ int main() {
      ba[1].x += 5;
     }
     
-    if (delayCpt >= 4) {
+    if (delayCpt >= 20) {
       // here we define how many bullet we can throw per second according to SDL_Delay(..) AND delayCpt >= ... 
       delayCpt = 0;
-    } else {
+    } else if (delayCpt != 0) {
       delayCpt += 1;
     }
     
