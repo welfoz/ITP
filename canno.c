@@ -20,7 +20,6 @@ typedef struct {
   int fireOdds;
 } TargetBullet;
 
-
 typedef struct {
 	int x;
 	int y;
@@ -53,7 +52,6 @@ void targetReInit(Target *t) {
   t->speed = 2 + rand() % 7; //speed between 2 and 8
   t->size = 5 + rand() % 20;
   t->is_explosion = 0;
-  //t->c = GREEN;
   t->direction = -1;
   // printf("ici");
 }
@@ -82,9 +80,8 @@ void draw_basic(double angle, struct Basic *b, int score, int fire_score, int de
     // here we draw the cannon shape 
     gfx_filledCircle(b->x, b->y, b->size, b->c);
     // gfx_filledTriangle(b->x, b->y, b->x + x1_barrel, b->y - y1_barrel,
-  // b->x + x2_barrel, b->y - y2_barrel, YELLOW);
     gfx_filledTriangle(b->x - width, b->y - width, b->x - decalage, b->y - hauteurY, b->x + width, b->y - width, RED); 
-    gfx_filledTriangle(b->x - decalage, b->y - hauteurY, b->x + width, b->y - width, b->x + decalage, b->y - hauteurY, GREEN); 
+    gfx_filledTriangle(b->x - decalage, b->y - hauteurY, b->x + width, b->y - width, b->x + decalage, b->y - hauteurY, RED); 
     char *x = "SCORES";
     char *scoreTarget = "Targets shot";
     char *scoreBullet = "Bullets shot";
@@ -138,7 +135,6 @@ void animation(Target *t, int i)
   targetReInit(t);
 }
 
-
 void draw_target(Target *tt, int i)
 {	
   gfx_filledRect(tt->x, tt->y, tt->x + tt->size, tt->y - tt->size, tt->c);
@@ -149,7 +145,6 @@ void draw_target(Target *tt, int i)
 		animation(tt, i);
 	}
 }
-
 
 void move_target(Target *t, int i) {
 	if (t->is_explosion == 0)
@@ -197,13 +192,12 @@ void draw_bullet(struct Bullet *b) {
       const int partDecalage = 20;
       const int partDecalage2 = 40;
 
-      gfx_filledTriangle(b->x, b->y, b->x + widthDecalage, b->y + heightDecalage, b->x - widthDecalage, b->y + heightDecalage, b->c);
+      gfx_filledTriangle(b->x, b->y, b->x + widthDecalage, b->y + heightDecalage, b->x - widthDecalage, b->y + heightDecalage, RED);
       gfx_filledTriangle(b->x, b->y + partDecalage, b->x + widthDecalage, b->y + heightDecalage + partDecalage, b->x - widthDecalage, b->y + heightDecalage + partDecalage, b->c);
       gfx_filledTriangle(b->x, b->y + partDecalage2, b->x + widthDecalage, b->y + heightDecalage + partDecalage2, b->x - widthDecalage, b->y + heightDecalage + partDecalage2, b->c);
       // gfx_filledCircle(b->x, b->y, b->size,b->c);
       
 }
-
 
 void move_bullet(struct Bullet *b) {
 	b->distance += 15;
@@ -226,11 +220,12 @@ void check_distance(struct Bullet *b, Target *t, int i) {
   }
 }
 
-void init_shot(struct Bullet *b, double angle, struct Basic *ba) {
+// we pass struct Basic by value because we don't need to modify it!
+void init_shot(struct Bullet *b, double angle, struct Basic ba) {
           b->is_shot = 1;
           b->fire_angle = angle;
           b->distance = 170;
-          b->x_init = ba->x;
+          b->x_init = ba.x;
           b->fire_cpt += 1;
 }
 
@@ -255,10 +250,6 @@ void moveTargetBullet(Target *t) {
       }
 
 }
-
-
-
-
 
 void animationBasic(Target *t) 
 {
@@ -352,7 +343,7 @@ int main() {
   ba[1].x = gfx_screenWidth() / 2;
   ba[1].y = gfx_screenHeight();
   ba[1].size = 100;
-  ba[1].c = YELLOW;
+  ba[1].c = WHITE;
 
   // init bullet structure
   struct Bullet b[NUMBER_OF_BULLET +1];
@@ -360,7 +351,7 @@ int main() {
     b[i].x = 0;
     b[i].y = 0;
     b[i].size = 10; 
-    b[i].c = YELLOW;
+    b[i].c = WHITE;
     b[i].fire_angle = 0;
     b[i].is_shot = 0; // if is_shot = 1 then the bullet is shot
     b[i].fire_cpt = 0;
@@ -483,7 +474,7 @@ int main() {
         for (int i=1; i<NUMBER_OF_BULLET +1; i++) {
           if (b[i].is_shot == 0) {
             //gf("oui");
-            init_shot(&(b[i]), angle, &(ba[1]));
+            init_shot(&(b[i]), angle, ba[1]);
             delayCpt++;
             break;
           }
